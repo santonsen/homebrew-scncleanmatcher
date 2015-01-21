@@ -1,4 +1,4 @@
-Require "formula"
+require "formula"
 
 class Scncleanmatcher < Formula
   homepage "http://shortcutolso.no"
