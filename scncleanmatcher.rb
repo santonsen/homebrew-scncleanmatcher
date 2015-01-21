@@ -1,8 +1,8 @@
-require "formula"
+Require "formula"
 
-class Scnscrapematcher < Formula
+class Scncleanmatcher < Formula
   homepage "http://shortcutolso.no"
-  url "https://github.com/santonsen/homebrew-scnprojectsetup/raw/master/dist/scnscrapematcher_0.0.2/scnscrapematcher_0.0.2.tar.gz"
+  url "https://github.com/santonsen/homebrew-scncleanmatcher/raw/master/dist/scncleanmatcher_0.0.2/scncleanmatcher_0.0.2.tar.gz"
   sha1 "a4e6fd86bc898a5c794f03b3427d2c91cd91dae5"
 
   def install
