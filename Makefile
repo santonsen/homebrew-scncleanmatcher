@@ -1,4 +1,4 @@
-NAME = scnscrapematcher
+NAME = scncleanmatcher
 VERSION = 0.0.2
 MAINTAINER = Sebastian Antonsen <sebastian@stormstudios.no>
 
@@ -10,7 +10,7 @@ SRC_DIR=src
 FILES= \
 __init__.py \
 config.json \
-scnscrapematcher
+scncleanmatcher
 
 prefix=/usr
 BIN_DIR=${prefix}/bin
@@ -37,7 +37,7 @@ tar:
 brew:HASH=$(shell openssl sha1 $(BUILD_ROOT)/$(TAR_NAME).tar.gz | tail -c 41)
 brew:
 	sed -i.tmp "s/sha1.*/sha1 \"$(HASH)\"/g" $(NAME).rb
-	sed -i.tmp "/url/s/scnscrapematcher_...../scnscrapematcher_$(VERSION)/g" $(NAME).rb
+	sed -i.tmp "/url/s/scncleanmatcher_...../scncleanmatcher_$(VERSION)/g" $(NAME).rb
 	rm $(NAME).rb.tmp
 
 distclean:
