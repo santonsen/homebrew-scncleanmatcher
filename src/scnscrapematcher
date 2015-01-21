@@ -1,0 +1,115 @@
+import os, re
+import difflib
+
+selected_finder_items = ['/Volumes/scn_commercial/rimi_gront_er_toft_20141217_mn/mastering/prores']
+
+class ScrapeMatcher():
+
+    def __init__(self, match_string, path):
+        self.match_string = match_string
+        self.path = path
+        self.hidden = False
+
+    def setMatchString(self, match_string):
+        self.match_string = match_string
+
+    def getMatchString(self):
+        return self.match_string
+
+    def setPath(self, path):
+        self.path = path
+
+    def getPath(self):
+        return self.path
+
+    def setHidden(self,hidden):
+        if type(hidden) == bool:
+            self.hidden = hidden
+        else:
+            raise Exception("setHidden requires a bool value")
+    def getHidden(self):
+        return self.hidden
+
+    def getMatches(self):
+        # this can take either a list of paths or a single path
+        if type(self.path) == list:
+            for path in self.path:
+                matches = self._getClnMatches(\
+                                              self._getAllFiles(path,
+                                                                self.hidden),
+                                              self._getClnFiles(path,
+                                                                self.match_string,
+                                                                self.hidden))
+        elif type(self.path) == str:
+            matches = self._getClnMatches(\
+                                          self._getAllFiles(self.path,
+                                                            self.hidden),
+                                          self._getClnFiles(self.path,
+                                                            self.match_string,
+                                                            self.hidden))
+        return matches
+
+    def _getAllFiles(self, path, hidden=False):
+        files = []
+        for (dirpath, dirnames, filenames) in os.walk(path):
+            if hidden:
+                files.extend(filenames)
+            else:
+                filenames = [f for f in filenames if not f[0] == '.']
+                dirnames[:] = [d for d in dirnames if not d[0] == '.']
+                files.extend(filenames)
+            if files == []:
+                return 'No files in %s' % path
+            else:
+                return files
+
+
+    def _getClnFiles(self, path, match_string, hidden=False):
+        f = []
+        cln_files = []
+        for (dirpath, dirnames, filenames) in os.walk(path):
+            if hidden:
+                f.extend(filenames)
+            else:
+                filenames = [x for x in filenames if not x[0] == '.']
+                dirnames[:] = [d for d in dirnames if not d[0] == '.']
+                f.extend(filenames)
+
+        for filename in f:
+            # case insensitive search for match_string
+            search_result = re.search(match_string, filename, re.I)
+            # if _cln_ is found, add it to cln_files
+            if search_result != None:
+                cln_files.append(filename)
+
+        return cln_files
+
+
+    def _getClnMatches(self, files, cln_files, debug=False):
+        matches = []
+        # split the clean and normal files
+        dirty_files = []
+
+        for f in files:
+            if f not in cln_files:
+                dirty_files.append(f)
+        if debug:
+            print "dirty files: %s" % dirty_files
+            print 'clean files: %s' % cln_files
+
+        for f in dirty_files:
+            best_ratio = 0
+            best_match = None
+            for c in cln_files:
+                match_ratio = difflib.SequenceMatcher(None, f, c).ratio()
+                if match_ratio > best_ratio and match_ratio > 0.9:
+                    best_ratio = match_ratio
+                    best_match = c
+            if best_match != None:
+                cln_files.remove(best_match)
+            print "MATCH: %s -->> %s" % (f, best_match)
+            matches.append([f, best_match])
+
+        return matches
+matcher = ScrapeMatcher('_cln_', selected_finder_items)
+matcher.getMatches()
