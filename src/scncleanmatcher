@@ -1,16 +1,28 @@
 #!/usr/bin/env python
 
-import os, re
+import sys, os, re
 import difflib
+import argparse
 
-selected_finder_items = ['/Volumes/scn_commercial/rimi_gront_er_toft_20141217_mn/mastering/prores']
+class CleanMatcher():
 
-class ScrapeMatcher():
-
-    def __init__(self, match_string, path):
-        self.match_string = match_string
-        self.path = path
+    def __init__(self):
         self.hidden = False
+
+        # get the user input
+        args = self._parser()
+
+        # get folder(s)
+        folders = args.folders
+        self.path = folders
+        # get the match_string
+        self.match_string = args.matchstring
+
+        # set debug or not
+        self.debug = args.debug
+
+        # do the matching
+        self.getMatches()
 
     def setMatchString(self, match_string):
         self.match_string = match_string
@@ -41,15 +53,41 @@ class ScrapeMatcher():
                                                                 self.hidden),
                                               self._getClnFiles(path,
                                                                 self.match_string,
-                                                                self.hidden))
+                                                                self.hidden),
+                                              self.debug)
         elif type(self.path) == str:
             matches = self._getClnMatches(\
                                           self._getAllFiles(self.path,
                                                             self.hidden),
                                           self._getClnFiles(self.path,
                                                             self.match_string,
-                                                            self.hidden))
+                                                            self.hidden),
+                                          self.debug)
         return matches
+
+
+    def _parser(self):
+        parser = argparse.ArgumentParser(prog='scncleanmatcher',
+                                         description='A script that scrapes through folder(s)' + \
+                                         'and fuzzy matches files based on a string.',
+                                         usage='scncleanmatcher folder(s) [-h]\n' + \
+                                         'example: scncleanmatcher /Volumes/scn_commercial/statoil_ally_120914_rg/')
+        parser.add_argument('folders', help='Target folder name(s)',
+                            metavar='FOLDER')
+        parser.add_argument('-m', '--matchstring',
+                            help='Specify a match string.\nDefault is "_CLN_"'+\
+                            'The match string is case insensitive.',
+                            default='_CLN_')
+        parser.add_argument('-d', '--debug', help='Turn on debugging',
+                            action='store_true')
+        if len(sys.argv) > 0:
+            args = parser.parse_args()
+        else:
+            print 'scncleanmatcher: error: too few arguments\n'
+            parser.print_help()
+            sys.exit(0)
+
+        return args
 
     def _getAllFiles(self, path, hidden=False):
         files = []
@@ -96,8 +134,8 @@ class ScrapeMatcher():
             if f not in cln_files:
                 dirty_files.append(f)
         if debug:
-            print "dirty files: %s" % dirty_files
-            print 'clean files: %s' % cln_files
+            print "\ndirty files: %s\n" % dirty_files
+            print 'clean files: %s\n' % cln_files
 
         for f in dirty_files:
             best_ratio = 0
@@ -113,5 +151,7 @@ class ScrapeMatcher():
             matches.append([f, best_match])
 
         return matches
-matcher = ScrapeMatcher('_cln_', selected_finder_items)
-matcher.getMatches()
+
+
+if __name__ == '__main__':
+    scncleanmatcher = CleanMatcher()
