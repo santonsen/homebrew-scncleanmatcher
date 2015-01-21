@@ -1,5 +1,5 @@
 NAME = scncleanmatcher
-VERSION = 0.0.3
+VERSION = 0.0.4
 MAINTAINER = Sebastian Antonsen <sebastian@stormstudios.no>
 
 BASE_DIR=dist
@@ -9,7 +9,6 @@ TAR_NAME=$(NAME)_$(VERSION)
 SRC_DIR=src
 FILES= \
 __init__.py \
-config.json \
 scncleanmatcher
 
 prefix=/usr
