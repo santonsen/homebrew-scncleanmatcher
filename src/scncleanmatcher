@@ -54,6 +54,7 @@ class CleanMatcher():
                                               self._getClnFiles(path,
                                                                 self.match_string,
                                                                 self.hidden),
+                                              self.match_string,
                                               self.debug)
         elif type(self.path) == str:
             matches = self._getClnMatches(\
@@ -62,6 +63,7 @@ class CleanMatcher():
                                           self._getClnFiles(self.path,
                                                             self.match_string,
                                                             self.hidden),
+                                          self.match_string,
                                           self.debug)
         return matches
 
@@ -69,21 +71,21 @@ class CleanMatcher():
     def _parser(self):
         parser = argparse.ArgumentParser(prog='scncleanmatcher',
                                          description='A script that scrapes through folder(s) ' + \
-                                         'and fuzzy matches files based on a string.',
-                                         usage='scncleanmatcher folder(s) [-h]\n' + \
-                                         'example: scncleanmatcher /Volumes/scn_commercial/statoil_ally_120914_rg/')
+                                         'and fuzzy matches files based on a string.')
         parser.add_argument('folders', help='Target folder name(s)',
+                            nargs='+',
                             metavar='FOLDER')
         parser.add_argument('-m', '--matchstring',
                             help='Specify a match string.\nDefault is "_CLN_"'+\
                             'The match string is case insensitive.',
-                            default='_CLN_')
+                            default='_CLN_',
+                            metavar='STRING')
         parser.add_argument('-d', '--debug', help='Turn on debugging',
                             action='store_true')
-        if len(sys.argv) > 0:
+        if len(sys.argv) > 1:
             args = parser.parse_args()
         else:
-            print 'scncleanmatcher: error: too few arguments\n'
+            print '\nscncleanmatcher: ERROR: too few arguments\n'
             parser.print_help()
             sys.exit(0)
 
@@ -98,24 +100,24 @@ class CleanMatcher():
                 filenames = [f for f in filenames if not f[0] == '.']
                 dirnames[:] = [d for d in dirnames if not d[0] == '.']
                 files.extend(filenames)
-            if files == []:
-                return 'No files in %s' % path
-            else:
-                return files
+        if files == []:
+            raise Exception('No files in %s' % path)
+        else:
+            return files
 
 
     def _getClnFiles(self, path, match_string, hidden=False):
-        f = []
+        files = []
         cln_files = []
         for (dirpath, dirnames, filenames) in os.walk(path):
             if hidden:
-                f.extend(filenames)
+                files.extend(filenames)
             else:
                 filenames = [x for x in filenames if not x[0] == '.']
                 dirnames[:] = [d for d in dirnames if not d[0] == '.']
-                f.extend(filenames)
+                files.extend(filenames)
 
-        for filename in f:
+        for filename in files:
             # case insensitive search for match_string
             search_result = re.search(match_string, filename, re.I)
             # if _cln_ is found, add it to cln_files
@@ -125,7 +127,7 @@ class CleanMatcher():
         return cln_files
 
 
-    def _getClnMatches(self, files, cln_files, debug=False):
+    def _getClnMatches(self, files, cln_files, match_string, debug=False):
         matches = []
         # split the clean and normal files
         dirty_files = []
@@ -137,18 +139,18 @@ class CleanMatcher():
             print "\ndirty files: %s\n" % dirty_files
             print 'clean files: %s\n' % cln_files
 
-        for f in dirty_files:
-            best_ratio = 0
-            best_match = None
-            for c in cln_files:
-                match_ratio = difflib.SequenceMatcher(None, f, c).ratio()
-                if match_ratio > best_ratio and match_ratio > 0.9:
-                    best_ratio = match_ratio
-                    best_match = c
-            if best_match != None:
-                cln_files.remove(best_match)
-            print "MATCH: %s -->> %s" % (f, best_match)
-            matches.append([f, best_match])
+        for dirty_file in dirty_files:
+            match = None
+            for cln_file in cln_files:
+                clean_part = re.search(match_string, cln_file, re.I).group()
+                formatted_string = re.sub(clean_part, '_..._', cln_file)
+                regex = re.compile(formatted_string)
+                search_result = regex.search(dirty_file)
+                if search_result != None:
+                    match = search_result
+                    cln_files.remove(match)
+            print "MATCH: %s -->> %s" % (dirty_file, match)
+            matches.append([f, match])
 
         return matches
 
