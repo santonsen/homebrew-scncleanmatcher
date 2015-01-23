@@ -1,5 +1,5 @@
 NAME = scncleanmatcher
-VERSION = 0.0.8
+VERSION = 1.0.0
 MAINTAINER = Sebastian Antonsen <sebastian@stormstudios.no>
 
 BASE_DIR=dist

@@ -12,9 +12,9 @@ class CleanMatcher():
         # get the user input
         args = self._parser()
 
-        # get folder(s)
-        folders = args.folders
-        self.path = folders
+        # get project(s)
+        projects  = args.projects
+        self.paths = self._getPaths(projects)
         # get the match_string
         self.match_string = args.matchstring
 
@@ -31,10 +31,10 @@ class CleanMatcher():
         return self.match_string
 
     def setPath(self, path):
-        self.path = path
+        self.paths = path
 
     def getPath(self):
-        return self.path
+        return self.paths
 
     def setHidden(self,hidden):
         if type(hidden) == bool:
@@ -46,8 +46,10 @@ class CleanMatcher():
 
     def getMatches(self):
         # this can take either a list of paths or a single path
-        if type(self.path) == list:
-            for path in self.path:
+        if type(self.paths) == list:
+            for path in self.paths:
+                print '--------------------' * 4
+                print 'Searching: %s' % path
                 matches = self._getClnMatches(\
                                               self._getAllFiles(path,
                                                                 self.hidden),
@@ -56,11 +58,11 @@ class CleanMatcher():
                                                                 self.hidden),
                                               self.match_string,
                                               self.debug)
-        elif type(self.path) == str:
+        elif type(self.paths) == str:
             matches = self._getClnMatches(\
-                                          self._getAllFiles(self.path,
+                                          self._getAllFiles(self.paths,
                                                             self.hidden),
-                                          self._getClnFiles(self.path,
+                                          self._getClnFiles(self.paths,
                                                             self.match_string,
                                                             self.hidden),
                                           self.match_string,
@@ -68,16 +70,25 @@ class CleanMatcher():
         return matches
 
 
+    def _getPaths(self,projects):
+        paths = []
+        for project in projects:
+            if os.path.exists(os.path.join(project,'mastering/prores')):
+                paths.append( str(os.path.join(project, 'mastering/prores')))
+            else:
+                raise Exception('could not find mastering/prores in supplied %s' % project)
+        return paths
+
     def _parser(self):
         parser = argparse.ArgumentParser(prog='scncleanmatcher',
                                          description='A script that scrapes through folder(s) ' + \
                                          'and fuzzy matches files based on a string.')
-        parser.add_argument('folders', help='Target folder name(s)',
+        parser.add_argument('projects', help='Target project(s)',
                             nargs='+',
                             metavar='FOLDER')
         parser.add_argument('-m', '--matchstring',
                             help='Specify a match string.\nDefault is "_CLN_"'+\
-                            'The match string is case insensitive.',
+                            'The match string is case insensitive. ',
                             default='_CLN_',
                             metavar='STRING')
         parser.add_argument('-d', '--debug', help='Turn on debugging',
@@ -139,18 +150,24 @@ class CleanMatcher():
             print "\ndirty files: %s\n" % dirty_files
             print 'clean files: %s\n' % cln_files
 
+        print '--------------------' * 4
         for dirty_file in dirty_files:
             match = None
             for cln_file in cln_files:
                 clean_part = re.search(match_string, cln_file, re.I).group()
-                formatted_string = re.sub(clean_part, '_..._', cln_file)
+                # ... must equal length of matchstring
+                wildcard_string = ('.' * (len(match_string)-2)).join(['_','_'])
+                formatted_string = re.sub(clean_part, wildcard_string, cln_file)
                 regex = re.compile(formatted_string)
                 search_result = regex.search(dirty_file)
                 if search_result != None:
-                    match = search_result
+                    match = cln_file
                     cln_files.remove(cln_file)
-            print "MATCH: %s -->> %s" % (dirty_file, match)
+            print "%s -->> %s" % (dirty_file, match)
+
             matches.append([f, match])
+
+        print '--------------------' * 4
 
         return matches
 
