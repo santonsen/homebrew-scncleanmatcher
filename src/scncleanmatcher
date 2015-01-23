@@ -148,7 +148,7 @@ class CleanMatcher():
                 search_result = regex.search(dirty_file)
                 if search_result != None:
                     match = search_result
-                    cln_files.remove(match)
+                    cln_files.remove(cln_file)
             print "MATCH: %s -->> %s" % (dirty_file, match)
             matches.append([f, match])
 

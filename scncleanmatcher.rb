@@ -2,8 +2,8 @@ require "formula"
 
 class Scncleanmatcher < Formula
   homepage "http://shortcutolso.no"
-  url "https://github.com/santonsen/homebrew-scncleanmatcher/raw/master/dist/scncleanmatcher_0.0.7/scncleanmatcher_0.0.7.tar.gz"
-  sha1 "3907655508da2e26b9a800a7f9d8e4b0d7e8f135"
+  url "https://github.com/santonsen/homebrew-scncleanmatcher/raw/master/dist/scncleanmatcher_0.0.8/scncleanmatcher_0.0.8.tar.gz"
+  sha1 "a46da5ec92ebed7891e61809650a036882435c3b"
 
   def install
     # Remove unrecognized options if warned by configure
