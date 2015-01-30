@@ -3,11 +3,16 @@
 import sys, os, re
 import difflib
 import argparse
+from termcolor import cprint
 
 class CleanMatcher():
 
     def __init__(self):
         self.hidden = False
+
+        # coloured print
+        self.green_print = '\033[1;32m{0}\033[1;m'
+        self.normal_print = '\033[0;37m{0}\033[1;m'
 
         # get the user input
         args = self._parser()
@@ -23,6 +28,7 @@ class CleanMatcher():
 
         # do the matching
         self.getMatches()
+
 
     def setMatchString(self, match_string):
         self.match_string = match_string
@@ -41,6 +47,7 @@ class CleanMatcher():
             self.hidden = hidden
         else:
             raise Exception("setHidden requires a bool value")
+
     def getHidden(self):
         return self.hidden
 
@@ -79,6 +86,7 @@ class CleanMatcher():
                 raise Exception('could not find mastering/prores in supplied %s' % project)
         return paths
 
+
     def _parser(self):
         parser = argparse.ArgumentParser(prog='scncleanmatcher',
                                          description='A script that scrapes through folder(s) ' + \
@@ -101,6 +109,7 @@ class CleanMatcher():
             sys.exit(0)
 
         return args
+
 
     def _getAllFiles(self, path, hidden=False):
         files = []
@@ -150,27 +159,32 @@ class CleanMatcher():
             print "\ndirty files: %s\n" % dirty_files
             print 'clean files: %s\n' % cln_files
 
-        print '--------------------' * 4
+        print self.normal_print.format('--------------------' * 4)
         for dirty_file in dirty_files:
             match = None
             for cln_file in cln_files:
                 clean_part = re.search(match_string, cln_file, re.I).group()
-                # ... must equal length of matchstring
-                wildcard_string = ('.' * (len(match_string)-2)).join(['_','_'])
+                wildcard_string = '.*'.join(['_','_'])
                 formatted_string = re.sub(clean_part, wildcard_string, cln_file)
+                if '_mute_' in cln_file:
+                    formatted_string = re.sub('_mute_', wildcard_string, formatted_string)
                 regex = re.compile(formatted_string)
                 search_result = regex.search(dirty_file)
                 if search_result != None:
                     match = cln_file
                     cln_files.remove(cln_file)
-            print "%s -->> %s" % (dirty_file, match)
+
+            match_print = "%s -->> %s" % (dirty_file, match)
+            if match != None:
+                print self.green_print.format(match_print)
+            else:
+                print self.normal_print.format(match_print)
 
             matches.append([f, match])
 
-        print '--------------------' * 4
+        print self.normal_print.format('--------------------' * 4)
 
         return matches
-
 
 if __name__ == '__main__':
     scncleanmatcher = CleanMatcher()
